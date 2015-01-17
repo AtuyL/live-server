@@ -47,11 +47,12 @@ function staticServer(root) {
 				// We need to modify the length given to browser
 				var len = INJECTED_CODE.length + res.getHeader('Content-Length');
 				res.setHeader('Content-Length', len);
-
-				var originalPipe = stream.pipe;
-				stream.pipe = function(res) {
-					originalPipe.call(stream, es.replace(new RegExp("</body>","i"), INJECTED_CODE + "</body>")).pipe(res);
-				};
+				stream.once("data",function(chunk){
+					var str = chunk.toString(),
+						index = str.indexOf(">") + 1;
+					// Write the injected code
+					res.write([str.slice(0, index), INJECTED_CODE, str.slice(index)].join(''));
+				});
 			}
 		}
 
